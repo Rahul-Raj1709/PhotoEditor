@@ -28,11 +28,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.transition.ChangeBounds
 import androidx.transition.TransitionManager
-import com.burhanrashid52.photoediting.EmojiBSFragment.EmojiListener
-import com.burhanrashid52.photoediting.StickerBSFragment.StickerListener
 import com.burhanrashid52.photoediting.base.BaseActivity
-import com.burhanrashid52.photoediting.filters.FilterListener
-import com.burhanrashid52.photoediting.filters.FilterViewAdapter
 import com.burhanrashid52.photoediting.tools.EditingToolsAdapter
 import com.burhanrashid52.photoediting.tools.EditingToolsAdapter.OnItemSelected
 import com.burhanrashid52.photoediting.tools.ToolType
@@ -40,7 +36,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment
 import ja.burhanrashid52.photoeditor.OnPhotoEditorListener
 import ja.burhanrashid52.photoeditor.PhotoEditor
 import ja.burhanrashid52.photoeditor.PhotoEditorView
-import ja.burhanrashid52.photoeditor.PhotoFilter
 import ja.burhanrashid52.photoeditor.SaveFileResult
 import ja.burhanrashid52.photoeditor.SaveSettings
 import ja.burhanrashid52.photoeditor.TextStyleBuilder
@@ -52,16 +47,14 @@ import java.io.File
 import java.io.IOException
 
 class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickListener,
-    PropertiesBSFragment.Properties, ShapeBSFragment.Properties, EmojiListener, StickerListener,
-    OnItemSelected, FilterListener {
+    PropertiesBSFragment.Properties, ShapeBSFragment.Properties,
+    OnItemSelected {
 
     lateinit var mPhotoEditor: PhotoEditor
     private lateinit var mPhotoEditorView: PhotoEditorView
     private lateinit var mPropertiesBSFragment: PropertiesBSFragment
     private lateinit var mShapeBSFragment: ShapeBSFragment
     private lateinit var mShapeBuilder: ShapeBuilder
-    private lateinit var mEmojiBSFragment: EmojiBSFragment
-    private lateinit var mStickerBSFragment: StickerBSFragment
     private lateinit var mTxtCurrentTool: TextView
     private lateinit var mWonderFont: Typeface
     private lateinit var mRvTools: RecyclerView
@@ -69,7 +62,6 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
     private lateinit var mImgUndo: View
     private lateinit var mImgRedo: View
     private val mEditingToolsAdapter = EditingToolsAdapter(this)
-    private val mFilterViewAdapter = FilterViewAdapter(this)
     private lateinit var mRootView: ConstraintLayout
     private val mConstraintSet = ConstraintSet()
     private var mIsFilterVisible = false
@@ -91,21 +83,13 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
         mWonderFont = Typeface.createFromAsset(assets, "beyond_wonderland.ttf")
 
         mPropertiesBSFragment = PropertiesBSFragment()
-        mEmojiBSFragment = EmojiBSFragment()
-        mStickerBSFragment = StickerBSFragment()
         mShapeBSFragment = ShapeBSFragment()
-        mStickerBSFragment.setStickerListener(this)
-        mEmojiBSFragment.setEmojiListener(this)
         mPropertiesBSFragment.setPropertiesChangeListener(this)
         mShapeBSFragment.setPropertiesChangeListener(this)
 
         val llmTools = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
         mRvTools.layoutManager = llmTools
         mRvTools.adapter = mEditingToolsAdapter
-
-        val llmFilters = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
-        mRvFilters.layoutManager = llmFilters
-        mRvFilters.adapter = mFilterViewAdapter
 
         // NOTE(lucianocheng): Used to set integration testing parameters to PhotoEditor
         val pinchTextScalable = intent.getBooleanExtra(PINCH_TEXT_SCALABLE_INTENT_KEY, true)
@@ -159,7 +143,6 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
         mPhotoEditorView = findViewById(R.id.photoEditorView)
         mTxtCurrentTool = findViewById(R.id.txtCurrentTool)
         mRvTools = findViewById(R.id.rvConstraintTools)
-        mRvFilters = findViewById(R.id.rvFilterView)
         mRootView = findViewById(R.id.rootView)
 
         mImgUndo = findViewById(R.id.imgUndo)
@@ -170,20 +153,12 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
         mImgRedo.setOnClickListener(this)
         mImgRedo.isEnabled = false
 
-        val imgCamera: ImageView = findViewById(R.id.imgCamera)
-        imgCamera.setOnClickListener(this)
-
-        val imgGallery: ImageView = findViewById(R.id.imgGallery)
-        imgGallery.setOnClickListener(this)
-
         val imgSave: ImageView = findViewById(R.id.imgSave)
         imgSave.setOnClickListener(this)
 
         val imgClose: ImageView = findViewById(R.id.imgClose)
         imgClose.setOnClickListener(this)
 
-        val imgShare: ImageView = findViewById(R.id.imgShare)
-        imgShare.setOnClickListener(this)
     }
 
     override fun onEditTextChangeListener(rootView: View, text: String, colorCode: Int) {
@@ -247,18 +222,6 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
 
             R.id.imgSave -> saveImage()
             R.id.imgClose -> onBackPressed()
-            R.id.imgShare -> shareImage()
-            R.id.imgCamera -> {
-                val cameraIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
-                startActivityForResult(cameraIntent, CAMERA_REQUEST)
-            }
-
-            R.id.imgGallery -> {
-                val intent = Intent()
-                intent.type = "image/*"
-                intent.action = Intent.ACTION_GET_CONTENT
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_REQUEST)
-            }
         }
     }
 
@@ -382,16 +345,6 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
         mPhotoEditor.setShape(mShapeBuilder.withShapeType(shapeType))
     }
 
-    override fun onEmojiClick(emojiUnicode: String) {
-        mPhotoEditor.addEmoji(emojiUnicode)
-        mTxtCurrentTool.setText(R.string.label_emoji)
-    }
-
-    override fun onStickerClick(bitmap: Bitmap) {
-        mPhotoEditor.addImage(bitmap)
-        mTxtCurrentTool.setText(R.string.label_sticker)
-    }
-
     @SuppressLint("MissingPermission")
     override fun isPermissionGranted(isGranted: Boolean, permission: String?) {
         if (isGranted) {
@@ -407,10 +360,6 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
         builder.setNegativeButton("Cancel") { dialog: DialogInterface, _: Int -> dialog.dismiss() }
         builder.setNeutralButton("Discard") { _: DialogInterface?, _: Int -> finish() }
         builder.create().show()
-    }
-
-    override fun onFilterSelected(photoFilter: PhotoFilter) {
-        mPhotoEditor.setFilterEffect(photoFilter)
     }
 
     override fun onToolSelected(toolType: ToolType) {
@@ -440,14 +389,6 @@ class EditImageActivity : BaseActivity(), OnPhotoEditorListener, View.OnClickLis
                 mPhotoEditor.brushEraser()
                 mTxtCurrentTool.setText(R.string.label_eraser_mode)
             }
-
-            ToolType.FILTER -> {
-                mTxtCurrentTool.setText(R.string.label_filter)
-                showFilter(true)
-            }
-
-            ToolType.EMOJI -> showBottomSheetDialogFragment(mEmojiBSFragment)
-            ToolType.STICKER -> showBottomSheetDialogFragment(mStickerBSFragment)
         }
     }
 

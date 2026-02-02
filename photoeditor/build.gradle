@@ -7,14 +7,13 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 34
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 
@@ -31,6 +30,10 @@ android {
         unitTests {
             includeAndroidResources = true
         }
+        targetSdk 34
+    }
+    lint {
+        targetSdk 34
     }
 
     tasks.withType(Javadoc) {
