@@ -50,9 +50,6 @@ internal class PhotoEditorImpl @SuppressLint("ClickableViewAccessibility") const
 
     override fun addImage(desiredImage: Bitmap) {
         val multiTouchListener = getMultiTouchListener(true)
-        val sticker = Sticker(photoEditorView, multiTouchListener, viewState, mGraphicManager)
-        sticker.buildView(desiredImage)
-        addToEditor(sticker)
     }
 
     override fun addText(text: String, colorCodeTextView: Int) {
@@ -105,24 +102,6 @@ internal class PhotoEditorImpl @SuppressLint("ClickableViewAccessibility") const
             styleBuilder?.applyStyle(inputTextView)
             mGraphicManager.updateView(view)
         }
-    }
-
-    override fun addEmoji(emojiName: String) {
-        addEmoji(null, emojiName)
-    }
-
-    override fun addEmoji(emojiTypeface: Typeface?, emojiName: String) {
-        drawingView.enableDrawing(false)
-        val multiTouchListener = getMultiTouchListener(true)
-        val emoji = Emoji(
-            photoEditorView,
-            multiTouchListener,
-            viewState,
-            mGraphicManager,
-            mDefaultEmojiTypeface
-        )
-        emoji.buildView(emojiTypeface, emojiName)
-        addToEditor(emoji)
     }
 
     private fun addToEditor(graphic: Graphic) {
@@ -204,20 +183,11 @@ internal class PhotoEditorImpl @SuppressLint("ClickableViewAccessibility") const
         mBoxHelper.clearHelperBox()
     }
 
-    override fun setFilterEffect(customEffect: CustomEffect?) {
-        photoEditorView.setFilterEffect(customEffect)
-    }
-
-    override fun setFilterEffect(filterType: PhotoFilter) {
-        photoEditorView.setFilterEffect(filterType)
-    }
-
     @RequiresPermission(allOf = [Manifest.permission.WRITE_EXTERNAL_STORAGE])
     override suspend fun saveAsFile(
         imagePath: String,
         saveSettings: SaveSettings
     ): SaveFileResult = withContext(Dispatchers.Main) {
-        photoEditorView.saveFilter()
         val photoSaverTask = PhotoSaverTask(photoEditorView, mBoxHelper, saveSettings)
         return@withContext photoSaverTask.saveImageAsFile(imagePath)
     }
@@ -225,7 +195,6 @@ internal class PhotoEditorImpl @SuppressLint("ClickableViewAccessibility") const
     override suspend fun saveAsBitmap(
         saveSettings: SaveSettings
     ): Bitmap = withContext(Dispatchers.Main) {
-        photoEditorView.saveFilter()
         val photoSaverTask = PhotoSaverTask(photoEditorView, mBoxHelper, saveSettings)
         return@withContext photoSaverTask.saveImageAsBitmap()
     }

@@ -32,24 +32,11 @@ class PhotoEditorView @JvmOverloads constructor(
     internal var drawingView: DrawingView
         private set
 
-    private var mImageFilterView: ImageFilterView
     private var clipSourceImage = false
 
     init {
         //Setup image attributes
         val sourceParam = setupImageSource(attrs)
-        //Setup GLSurface attributes
-        mImageFilterView = ImageFilterView(context)
-        val filterParam = setupFilterView()
-
-        mImgSource.setOnImageChangedListener(object : OnImageChangedListener {
-            override fun onBitmapLoaded(sourceBitmap: Bitmap?) {
-                mImageFilterView.setFilterEffect(PhotoFilter.NONE)
-                mImageFilterView.setSourceBitmap(sourceBitmap)
-                Log.d(TAG, "onBitmapLoaded() called with: sourceBitmap = [$sourceBitmap]")
-            }
-        })
-
 
         //Setup drawing view
         drawingView = DrawingView(context)
@@ -57,9 +44,6 @@ class PhotoEditorView @JvmOverloads constructor(
 
         //Add image source
         addView(mImgSource, sourceParam)
-
-        //Add Gl FilterView
-        addView(mImageFilterView, filterParam)
 
         //Add brush view
         addView(drawingView, brushParam)
@@ -107,9 +91,6 @@ class PhotoEditorView @JvmOverloads constructor(
     }
 
     private fun setupFilterView(): LayoutParams {
-        mImageFilterView.visibility = GONE
-        mImageFilterView.id = glFilterId
-
         //Align brush to the size of image view
         val params = LayoutParams(
             ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
@@ -127,31 +108,6 @@ class PhotoEditorView @JvmOverloads constructor(
      */
     val source: ImageView
         get() = mImgSource
-
-    internal suspend fun saveFilter(): Bitmap {
-        return if (mImageFilterView.visibility == VISIBLE) {
-            val saveBitmap = try {
-                mImageFilterView.saveBitmap()
-            } catch (t: Throwable) {
-                throw RuntimeException("Couldn't save bitmap with filter", t)
-            }
-            mImgSource.setImageBitmap(saveBitmap)
-            mImageFilterView.visibility = GONE
-            saveBitmap
-        } else {
-            mImgSource.bitmap!!
-        }
-    }
-
-    internal fun setFilterEffect(filterType: PhotoFilter) {
-        mImageFilterView.visibility = VISIBLE
-        mImageFilterView.setFilterEffect(filterType)
-    }
-
-    internal fun setFilterEffect(customEffect: CustomEffect?) {
-        mImageFilterView.visibility = VISIBLE
-        mImageFilterView.setFilterEffect(customEffect)
-    }
 
     internal fun setClipSourceImage(clip: Boolean) {
         clipSourceImage = clip

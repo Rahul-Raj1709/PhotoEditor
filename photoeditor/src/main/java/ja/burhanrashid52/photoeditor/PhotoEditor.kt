@@ -86,23 +86,6 @@ interface PhotoEditor {
     fun editText(view: View, inputText: String, styleBuilder: TextStyleBuilder?)
 
     /**
-     * Adds emoji to the [PhotoEditorView] which you drag,rotate and scale using pinch
-     * if [PhotoEditorImpl.Builder.setPinchTextScalable] enabled
-     *
-     * @param emojiName unicode in form of string to display emoji
-     */
-    fun addEmoji(emojiName: String)
-
-    /**
-     * Adds emoji to the [PhotoEditorView] which you drag,rotate and scale using pinch
-     * if [PhotoEditorImpl.Builder.setPinchTextScalable] enabled
-     *
-     * @param emojiTypeface typeface for custom font to show emoji unicode in specific font
-     * @param emojiName     unicode in form of string to display emoji
-     */
-    fun addEmoji(emojiTypeface: Typeface?, emojiName: String)
-
-    /**
      * Enable/Disable drawing mode to draw on [PhotoEditorView]
      *
      * @param brushDrawingMode true if mode is enabled
@@ -224,21 +207,6 @@ interface PhotoEditor {
      *
      * @param customEffect [CustomEffect.Builder.setParameter]
      */
-    fun setFilterEffect(customEffect: CustomEffect?)
-
-    /**
-     * Set pre-define filter available
-     *
-     * @param filterType type of filter want to apply [PhotoEditorImpl]
-     */
-    fun setFilterEffect(filterType: PhotoFilter)
-
-    /**
-     * Save the edited image on given path
-     *
-     * @param imagePath      path on which image to be saved
-     * @param saveSettings   builder for multiple save options [SaveSettings]
-     */
     @RequiresPermission(allOf = [Manifest.permission.WRITE_EXTERNAL_STORAGE])
     suspend fun saveAsFile(
         imagePath: String,
@@ -313,17 +281,6 @@ interface PhotoEditor {
          */
         fun setDefaultTextTypeface(textTypeface: Typeface?): Builder {
             this.textTypeface = textTypeface
-            return this
-        }
-
-        /**
-         * set default font specific to add emojis
-         *
-         * @param emojiTypeface typeface for custom font
-         * @return [Builder] instant to build [PhotoEditor]
-         */
-        fun setDefaultEmojiTypeface(emojiTypeface: Typeface?): Builder {
-            this.emojiTypeface = emojiTypeface
             return this
         }
 
